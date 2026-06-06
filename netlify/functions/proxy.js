@@ -2,18 +2,9 @@
 //
 // Serverless proxy for the weather-ai.co API.
 //
-// All requests from the browser hit:
-//   /.netlify/functions/proxy/<endpoint>?<params>
-// e.g.
-//   /.netlify/functions/proxy/weather?latitude=-1.2921&longitude=36.8219&days=3
-//
-// This function:
-//   1. Reconstructs the upstream URL: https://api.weather-ai.co/v1/<endpoint>
-//   2. Forwards all query-string params unchanged
-//   3. Attaches the bearer token from the Netlify environment variable
-//      (WEATHER_API_TOKEN — set in Netlify dashboard, never exposed to the browser)
-//   4. Returns the upstream JSON response with permissive CORS headers so the
-//      browser on the Netlify domain can read it
+// The browser calls /api/<endpoint>?<params>
+// netlify.toml rewrites that to /.netlify/functions/proxy/<endpoint>
+// but event.path may still carry either form, so we strip both prefixes.
 
 const UPSTREAM_BASE = "https://api.weather-ai.co/v1";
 
@@ -24,12 +15,11 @@ const CORS_HEADERS = {
 };
 
 export const handler = async (event) => {
-  // Handle pre-flight OPTIONS request
+  // Pre-flight
   if (event.httpMethod === "OPTIONS") {
     return { statusCode: 204, headers: CORS_HEADERS, body: "" };
   }
 
-  // Only allow GET
   if (event.httpMethod !== "GET") {
     return {
       statusCode: 405,
@@ -38,19 +28,23 @@ export const handler = async (event) => {
     };
   }
 
-  // Extract the endpoint path from the function path
-  // e.g. /.netlify/functions/proxy/weather  →  /weather
+  // Strip every possible prefix Netlify might leave in event.path:
+  //   /.netlify/functions/proxy/weather  →  /weather
+  //   /api/weather                       →  /weather
+  //   /weather                           →  /weather  (plain fallback)
   const rawPath = event.path || "";
-  const endpoint = rawPath.replace(/^\/.netlify\/functions\/proxy/, "") || "/weather";
+  const endpoint = rawPath
+    .replace(/^\/.netlify\/functions\/proxy/, "")
+    .replace(/^\/api/, "")
+    || "/weather";
 
-  // Build upstream URL, forwarding all query params
+  // Build upstream URL with all forwarded query params
   const upstreamUrl = new URL(`${UPSTREAM_BASE}${endpoint}`);
   const params = event.queryStringParameters || {};
   Object.entries(params).forEach(([k, v]) => {
     if (v !== undefined && v !== null) upstreamUrl.searchParams.set(k, v);
   });
 
-  // Retrieve the token from Netlify environment (set in dashboard, not .env)
   const token = process.env.WEATHER_API_TOKEN;
 
   try {
