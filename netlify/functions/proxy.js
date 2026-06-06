@@ -1,11 +1,3 @@
-// netlify/functions/proxy.js
-//
-// Serverless proxy for the weather-ai.co API.
-//
-// The browser calls /api/<endpoint>?<params>
-// netlify.toml rewrites that to /.netlify/functions/proxy/<endpoint>
-// but event.path may still carry either form, so we strip both prefixes.
-
 const UPSTREAM_BASE = "https://api.weather-ai.co/v1";
 
 const CORS_HEADERS = {
@@ -28,15 +20,11 @@ export const handler = async (event) => {
     };
   }
 
-  // Strip every possible prefix Netlify might leave in event.path:
-  //   /.netlify/functions/proxy/weather  →  /weather
-  //   /api/weather                       →  /weather
-  //   /weather                           →  /weather  (plain fallback)
   const rawPath = event.path || "";
-  const endpoint = rawPath
-    .replace(/^\/.netlify\/functions\/proxy/, "")
-    .replace(/^\/api/, "")
-    || "/weather";
+  const endpoint =
+    rawPath
+      .replace(/^\/.netlify\/functions\/proxy/, "")
+      .replace(/^\/api/, "") || "/weather";
 
   // Build upstream URL with all forwarded query params
   const upstreamUrl = new URL(`${UPSTREAM_BASE}${endpoint}`);

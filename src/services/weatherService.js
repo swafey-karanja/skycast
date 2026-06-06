@@ -1,20 +1,8 @@
-// src/services/weatherService.js
-//
-// In development  → requests go to /api/* which Vite proxies to the upstream
-//                   directly (see vite.config.js), attaching the token server-side.
-//
-// In production   → requests go to /api/* which Netlify rewrites to the
-//                   proxy serverless function (netlify/functions/proxy.js),
-//                   which attaches the token from the Netlify environment.
-//
-// Either way the browser never sees the bearer token or touches the upstream
-// API directly — CORS is handled entirely by the proxy layer.
-
 const BASE_URL = "/api";
 
 const DEFAULTS = {
-  latitude:  -1.2921,
-  longitude:  36.8219,
+  latitude: -1.2921,
+  longitude: 36.8219,
 };
 
 /**
