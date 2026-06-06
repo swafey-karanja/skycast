@@ -153,31 +153,7 @@ Three environments, one consistent `/api/*` path in `weatherService.js`:
 
 Vercel handles the proxy via rewrites in `vercel.json` — no Express server or extra configuration needed.
 
-### 1. Push to GitHub
-
-```bash
-git add .
-git commit -m "ready for deployment"
-git push origin main
 ```
-
-### 2. Import the project on Vercel
-
-Go to [vercel.com/new](https://vercel.com/new), click **Add New Project**, and import your GitHub repository. Vercel will auto-detect Vite — no build settings need changing.
-
-### 3. Add environment variables
-
-In the Vercel project dashboard go to **Settings → Environment Variables** and add:
-
-| Name                | Value                    |
-| ------------------- | ------------------------ |
-| `WEATHER_API_TOKEN` | your weather-ai.co token |
-
-### 4. Deploy
-
-Click **Deploy**. Vercel builds the app and the `vercel.json` rewrites activate automatically, routing `/api/*` through to the upstream with your token attached.
-
----
 
 ## Contributing
 
@@ -192,3 +168,4 @@ Keep components self-contained and add any new API calls to `weatherService.js`.
 ## License
 
 MIT
+```
