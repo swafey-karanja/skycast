@@ -1,6 +1,6 @@
 # Skycast 🌦️
 
-A clean, responsive weather app built with React and Vite, powered by the [weather-ai.co](https://api.weather-ai.co) API. Skycast displays current conditions, hourly and daily forecasts, and an AI-generated weather summary — all in a polished dark UI.
+A responsive weather app built with React and Vite, powered by the [weather-ai.co](https://api.weather-ai.co) API. Displays current conditions, hourly and daily forecasts, and an AI-generated weather summary — all in a dark UI.
 
 ![React](https://img.shields.io/badge/React-18-blue) ![Vite](https://img.shields.io/badge/Vite-5-purple) ![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-3-teal)
 
@@ -8,24 +8,26 @@ A clean, responsive weather app built with React and Vite, powered by the [weath
 
 ## Features
 
-- **Current conditions** — temperature, wind, humidity, UV index, and an AI-generated summary
-- **Hourly forecast** — horizontally scrollable strip for the next 24 hours
-- **Daily forecast** — multi-day outlook with min/max temperature range bars
-- **Tab navigation** — jump directly to Current, Hourly, or Daily views
-- **API usage card** — live view of billing period, request count, and plan limits
-- **Skeleton loading states** and graceful error handling with a retry button
+- Current conditions — temperature, feels like, wind, humidity, UV index, wind gust
+- AI-generated weather summary
+- Hourly forecast — 24-hour view with 8 data points per entry
+- Daily forecast — multi-day outlook with temperature range bars, precipitation, sunrise/sunset, and max wind
+- Tab navigation — All, Current, Hourly, Daily
+- Days dropdown — 1 to 7 day forecast range
+- API usage card — billing period, request counts, and plan limits
+- Skeleton loading states and error handling with retry
 
 ---
 
 ## Tech stack
 
-| Layer        | Library / Tool         |
-| ------------ | ---------------------- |
-| UI framework | React 18               |
-| Build tool   | Vite 5                 |
-| Styling      | Tailwind CSS 3         |
-| HTTP         | Native `fetch`         |
-| Weather data | weather-ai.co REST API |
+| Layer   | Tool                   |
+| ------- | ---------------------- |
+| UI      | React 18               |
+| Build   | Vite 5                 |
+| Styling | Tailwind CSS 3         |
+| HTTP    | Native `fetch`         |
+| Data    | weather-ai.co REST API |
 
 ---
 
@@ -34,37 +36,59 @@ A clean, responsive weather app built with React and Vite, powered by the [weath
 ```
 skycast/
 ├── index.html
-├── package.json
-├── vite.config.js
-├── vercel.json               # Vercel rewrites — routes /api/* to the upstream
+├── netlify.toml                        # Build config + /api/* proxy redirect
+├── vite.config.js                      # Dev server proxy
 ├── tailwind.config.js
 ├── postcss.config.js
+├── package.json
+├── .env.development                    # Local env vars (not committed)
+├── netlify/
+│   └── functions/
+│       └── proxy.js                    # Serverless proxy function
 └── src/
-    ├── main.jsx              # React entry point
-    ├── App.jsx               # Root component — owns tab/day/unit state, wires all components
-    ├── index.css             # Tailwind directives + global utilities
+    ├── main.jsx
+    ├── App.jsx                         # Root — owns tab, days, units state
+    ├── index.css                       # Tailwind directives + global utilities
     ├── services/
-    │   └── weatherService.js # All API call logic; always calls /api/*
+    │   └── weatherService.js           # All API calls — always uses /api/*
     ├── hooks/
-    │   ├── useWeather.js     # Fetches full weather payload
-    │   └── useUsage.js       # Fetches API billing & plan limits
+    │   ├── useWeather.js               # Fetches full weather payload
+    │   └── useUsage.js                 # Fetches API billing & limits
     ├── utils/
-    │   └── weather.js        # WMO code helpers, formatters, colour utils
+    │   └── weather.js                  # WMO helpers, formatters, colour utils
     └── components/
-        ├── WeatherHeader.jsx
-        ├── CurrentWeatherCard.jsx
-        ├── HourlyForecastCard.jsx
-        ├── DailyForecastCard.jsx
-        └── UsageCard.jsx
+        ├── WeatherHeader.jsx           # Sticky nav, tabs, units, days
+        ├── CurrentWeatherCard.jsx      # Current conditions hero card
+        ├── HourlyForecastCard.jsx      # 24-hour two-column grid
+        ├── DailyForecastCard.jsx       # Daily two-column grid
+        └── UsageCard.jsx               # API quota and plan info
 ```
 
 ---
 
-## Prerequisites
+## API endpoints
 
-- **Node.js** v18 or later
-- **npm** v9 or later
-- A **weather-ai.co API token** — sign up at [weather-ai.co](https://weather-ai.co)
+All calls go through `weatherService.js` which uses `/api/*` — the proxy layer resolves this to `https://api.weather-ai.co/v1/*`.
+
+| Method     | Endpoint          | Used for                              |
+| ---------- | ----------------- | ------------------------------------- |
+| `getAll`   | `GET /v1/weather` | Full payload — current, hourly, daily |
+| `getUsage` | `GET /v1/usage`   | Billing period and plan limits        |
+
+---
+
+## CORS proxy
+
+The upstream API does not return CORS headers for browser requests, so all calls are routed through a proxy. The proxy also keeps the API token off the client.
+
+```
+Browser → /api/* → proxy → https://api.weather-ai.co/v1/*
+```
+
+| Environment | Mechanism                                                |
+| ----------- | -------------------------------------------------------- |
+| Development | Vite `server.proxy` in `vite.config.js`                  |
+| Production  | `netlify/functions/proxy.js` via `netlify.toml` redirect |
 
 ---
 
@@ -76,95 +100,48 @@ cd skycast
 npm install
 ```
 
-Create `.env.development` in the project root:
+Add `.env.development` to the project root:
 
 ```env
 VITE_WEATHER_API_TOKEN=your_api_token_here
 VITE_WEATHER_API_BASE_URL=https://api.weather-ai.co/v1
 ```
 
-Then start the dev server:
-
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173). The Vite dev proxy forwards `/api/*` to the upstream automatically — no separate proxy process needed.
-
-To also test the Express proxy locally:
-
-```bash
-cd proxy && npm install && cd ..
-node proxy/index.js        # terminal 1
-npm run dev                # terminal 2
-```
+Open [http://localhost:5173](http://localhost:5173). The Vite proxy handles `/api/*` automatically — no separate process needed.
 
 ---
 
 ## Configuration
 
-### Default location
-
-Edit `DEFAULT_COORDS` in `src/App.jsx`:
+**Default location** — `src/App.jsx`:
 
 ```js
 const DEFAULT_COORDS = { lat: -1.2921, lon: 36.8219 }; // Nairobi
 ```
 
-### Forecast range and units
+**Forecast defaults** — `src/App.jsx`:
 
 ```js
 const DEFAULT_DAYS = 3; // 1–7
-const DEFAULT_UNITS = "metric"; // "metric" | "imperial"
+const DEFAULT_UNITS = "metric"; // 'metric' | 'imperial'
 ```
 
 ---
 
-## Available scripts
+## Scripts
 
 | Command           | Description                          |
 | ----------------- | ------------------------------------ |
-| `npm run dev`     | Start the Vite dev server with HMR   |
+| `npm run dev`     | Start dev server with HMR            |
 | `npm run build`   | Build for production → `dist/`       |
 | `npm run preview` | Preview the production build locally |
-
----
-
-## CORS proxy
-
-Because the upstream API doesn't return CORS headers for arbitrary origins, all requests go through a proxy rather than calling `api.weather-ai.co` directly from the browser. The proxy also keeps your API token off the client.
-
-```
-Browser → /api/* → [proxy] → https://api.weather-ai.co/v1/*
-```
-
-Three environments, one consistent `/api/*` path in `weatherService.js`:
-
-| Environment | Proxy mechanism                                       |
-| ----------- | ----------------------------------------------------- |
-| Development | Vite `server.proxy` in `vite.config.js`               |
-| Vercel      | `vercel.json` rewrites (serverless, no extra process) |
-| Other hosts | `proxy/index.js` — a small Express server             |
-
----
-
-## Deploying to Vercel
-
-Vercel handles the proxy via rewrites in `vercel.json` — no Express server or extra configuration needed.
-
-```
-
-## Contributing
-
-1. Fork the repo and create a feature branch: `git checkout -b feat/my-feature`
-2. Commit your changes with a descriptive message
-3. Push and open a pull request
-
-Keep components self-contained and add any new API calls to `weatherService.js`.
 
 ---
 
 ## License
 
 MIT
-```
