@@ -12,7 +12,6 @@ A clean, responsive weather app built with React and Vite, powered by the [weath
 - **Hourly forecast** — horizontally scrollable strip for the next 24 hours
 - **Daily forecast** — multi-day outlook with min/max temperature range bars
 - **Tab navigation** — jump directly to Current, Hourly, or Daily views
-- **Unit toggle** — switch between metric (°C) and imperial (°F)
 - **API usage card** — live view of billing period, request count, and plan limits
 - **Skeleton loading states** and graceful error handling with a retry button
 
