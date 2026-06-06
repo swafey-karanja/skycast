@@ -1,0 +1,21 @@
+# netlify.toml
+# Netlify build + proxy configuration
+
+[build]
+  command   = "npm run build"
+  publish   = "dist"
+  functions = "netlify/functions"
+
+# Rewrite /api/* → the proxy serverless function
+# This means the browser calls /api/weather, /api/usage etc.
+# and Netlify routes them through proxy.js before they leave the server.
+[[redirects]]
+  from   = "/api/*"
+  to     = "/.netlify/functions/proxy/:splat"
+  status = 200
+
+# SPA fallback — all other routes serve index.html
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
